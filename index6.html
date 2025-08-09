@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Menu COCO P - Catégories visuelles + Pop-up</title>
+<style>
+  body {
+    margin: 0; font-family: Arial, sans-serif; background: #fafafa; color: #333;
+  }
+  header {
+    background: #c0392b;
+    color: white;
+    text-align: center;
+    padding: 20px;
+  }
+  header img {
+    max-width: 120px;
+    height: auto;
+    display: block;
+    margin: 0 auto 10px;
+  }
+  header p {
+    font-size: 1rem;
+    margin: 0;
+    color: white;
+  }
+
+  /* Grille catégories */
+  #categories {
+    display: grid;
+    grid-template-columns: repeat(auto-fit,minmax(240px,1fr));
+    gap: 20px;
+    max-width: 1100px;
+    margin: 25px auto 50px;
+    padding: 0 15px;
+  }
+  .category-card {
+    position: relative;
+    cursor: pointer;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+    border: 3px solid transparent;
+  }
+  .category-card:hover {
+    transform: scale(1.05);
+    border-color: #c0392b;
+  }
+  .category-card img {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+    display: block;
+  }
+  .category-title {
+    position: absolute;
+    bottom: 12px;
+    left: 12px;
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 700;
+    text-shadow: 0 0 6px rgba(0,0,0,0.7);
+  }
+
+  /* Section plats */
+  #plats-section {
+    max-width: 1100px;
+    margin: 25px auto 50px;
+    padding: 0 15px;
+    display: none;
+  }
+  #plats-section.active {
+    display: block;
+  }
+  #plats-section h2 {
+    font-size: 2rem;
+    border-bottom: 3px solid #c0392b;
+    padding-bottom: 10px;
+    margin-bottom: 25px;
+  }
+  .plats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit,minmax(280px,1fr));
+    gap: 22px;
+  }
+  .plat-card {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+    overflow: hidden;
+    text-align: center;
+    transition: transform 0.3s ease;
+  }
+  .plat-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+  }
+  .plat-card img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-bottom: 4px solid #c0392b;
+    border-radius: 0 0 10px 10px;
+  }
+  .plat-card h3 {
+    margin: 12px 10px 6px;
+    font-weight: 700;
+  }
+  .plat-card p {
+    margin: 0 10px 8px;
+    color: #666;
+    font-size: 0.95rem;
+  }
+  .plat-card .price {
+    color: #c0392b;
+    font-weight: 700;
+    margin-bottom: 14px;
+    font-size: 1.1rem;
+  }
+
+  /* Bouton retour */
+  #back-btn {
+    display: inline-block;
+    margin-bottom: 20px;
+    background: #c0392b;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    user-select: none;
+  }
+  #back-btn:hover {
+    background-color: #a22a22;
+  }
+
+  /* POPUP */
+  #offer-popup {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.85);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+  }
+  .popup-content {
+    background: white;
+    padding: 25px 20px;
+    max-width: 380px;
+    border-radius: 14px;
+    text-align: center;
+    position: relative;
+    animation: popupZoom 0.45s ease;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+  }
+  .popup-content img {
+    width: 100%;
+    border-radius: 30px;
+  }
+  .popup-content h2 {
+    margin: 14px 0 10px;
+    color: #c0392b;
+    font-size: 1.4rem;
+  }
+  .popup-content p {
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+  .close-btn {
+    position: absolute;
+    top: 0px;
+    right: 14px;
+    font-size: 22px;
+    color: #333;
+    cursor: pointer;
+    font-weight: 700;
+    user-select: none;
+    transition: color 0.3s ease;
+  }
+  .close-btn:hover {
+    color: #c0392b;
+  }
+  @keyframes popupZoom {
+    from { transform: scale(0.4); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+</style>
+</head>
+<body>
+
+<!-- POPUP OFFRE -->
+<div id="offer-popup">
+  <div class="popup-content">
+    <span class="close-btn" onclick="closePopup()">✖</span>
+    <img src="https://i.imgur.com/Wg9GYWs.jpeg" alt="Offre spéciale" />
+    <h2>🎉 Offre Spéciale du Jour 🎉</h2>
+    <p>Petit déjeuner + Boisson <strike style="color: #666;">25.90$</strike> pour <b style="color: #a22a22;">9.90 $</b></p>
+  </div>
+</div>
+
+<header>
+  <img src="https://i.imgur.com/bkP55Pp.png" alt="Logo COCO P" />
+  <p>Scannez le QR Code et découvrez nos plats délicieux</p>
+</header>
+
+<!-- GRILLE DES CATÉGORIES -->
+<div id="categories">
+  <div class="category-card" data-category="Les oeufs">
+    <img src="https://i.imgur.com/N2HXYXJ.jpeg" alt="Les oeufs" />
+    <div class="category-title">Les oeufs</div>
+  </div>
+  <!-- ***************************************************************************************************** -->
+  <div class="category-card" data-category="Les œufs bénédictines">
+    <img src="https://i.imgur.com/vdBWLyw.jpeg" alt="Les œufs bénédictines" />
+    <div class="category-title">Les œufs bénédictines</div>
+  </div>
+  <!-- ***************************************************************************************************** -->
+  <div class="category-card" data-category="Les fameuses casseroles">
+    <img src="https://i.imgur.com/IDwMjyR.jpeg" alt="Les fameuses casseroles" />
+    <div class="category-title">Les fameuses casseroles</div>
+  </div>
+  <!-- ***************************************************************************************************** -->
+  <div class="category-card" data-category="Gaufres maison">
+    <img src="https://i.imgur.com/tY3X63d.jpeg" alt="Gaufres maison" />
+    <div class="category-title">Gaufres maison</div>
+  </div>
+  <!-- ***************************************************************************************************** -->
+  <div class="category-card" data-category="Les omelettes">
+    <img src="https://i.imgur.com/mB4dvNU.jpeg" alt="Les omelettes" />
+    <div class="category-title">Les omelettes</div>
+  </div>
+  <!-- ***************************************************************************************************** -->
+  <div class="category-card" data-category="Les crêpes">
+    <img src="https://www.ma-grande-taille.com/wp-content/uploads/2020/01/Une-idee-recettes-salees-sucrees-vegan-chandeleur-2020.jpg" alt="Crêpes" />
+    <div class="category-title">Les crêpes</div>
+  </div>
+  <!-- ***************************************************************************************************** -->
+  <div class="category-card" data-category="Amis & famille">
+    <img src="https://boutiquelecargo.com/wp-content/uploads/2024/08/photo-nickels-joliette-4.png" alt="Amis & famille" />
+    <div class="category-title">Amis & famille</div>
+  </div>
+  <!-- ***************************************************************************************************** -->
+  <div class="category-card" data-category="Les assiettes spéciales">
+    <img src="https://i.imgur.com/nYnLzkl.jpeg" alt="Les assiettes spéciales" />
+    <div class="category-title">Les assiettes spéciales</div>
+  </div>
+  <!-- ***************************************************************************************************** -->
+  <div class="category-card" data-category="Santé Fruits">
+    <img src="https://i.imgur.com/KtVQqEX.jpeg" alt="Santé Fruits" />
+    <div class="category-title">Santé Fruits</div>
+  </div>
+  <!-- ***************************************************************************************************** -->
+  <div class="category-card" data-category="Les sandwichs">
+    <img src="https://i.imgur.com/17YBnrC.jpeg" alt="Les sandwichs" />
+    <div class="category-title">Les sandwichs</div>
+  </div>
+  <!-- ***************************************************************************************************** -->
+  <div class="category-card" data-category="Menu midi">
+    <img src="https://i.imgur.com/sLFs06C.jpeg" alt="Menu midi" />
+    <div class="category-title">Menu midi</div>
+  </div>
+  <!-- ***************************************************************************************************** -->
+  <div class="category-card" data-category="Menu enfant">
+    <img src="https://i.imgur.com/xLcYoV9.jpeg" alt="Menu enfant" />
+    <div class="category-title">Menu enfant</div>
+  </div>
+</div>
+
+<!-- SECTION PLATS (CACHÉE PAR DÉFAUT) -->
+<div id="plats-section">
+  <span id="back-btn">← Retour aux catégories</span>
+  <h2 id="plats-title"></h2>
+  <div class="plats-grid" id="plats-grid"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+<script>
+  // Données des plats par catégorie
+  const menuData = {
+
+    //*************************** Les oeufs ****************************************
+    
+    "Les oeufs": [
+      {
+        img:"https://i.imgur.com/N2HXYXJ.jpeg",
+        name:"1 oeuf",
+        desc:"Choix de viande: bacon, jambon, saucisses, bologne, cretons, fèves au lard, bacon de dinde",
+        price:"1.00 $"
+      },
+      {
+        img:"https://assets.afcdn.com/recipe/20170112/3678_w1024h768c1cx1500cy1073.jpg",
+        name:"2 oeufs",
+        desc:"Choix de viande: bacon, jambon, saucisses, bologne, cretons, fèves au lard, bacon de dinde",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/HSx7JaC.jpeg",
+        name:"3 oeufs",
+        desc:"Choix de viande: bacon, jambon, saucisses, bologne, cretons, fèves au lard, bacon de dinde",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/heMKEwE.jpeg",
+        name:"Assiette Steak & Eggs",
+        desc:"Deux œufs, steak de 8 oz servis avec fèves au lard",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/nny8Em8.jpeg",
+        name:"Brunch Coco",
+        desc:"Deux œufs, fèves au lard, cretons, bacon, jambon, saucisses, crêpe et pain doré",
+        price:"1.00 $"
+      },
+      {
+        img:"https://assets.afcdn.com/story/20250807/2308366_w944h530c1cx2750cy1834cxt0cyt0cxb5500cyb3667.webp",
+        name:"Assiette 2014",
+        desc:"Deux œufs, choix de viande, crêpe ou pain doré, fèves au lard et cretons",
+        price:"1.00 $"
+      },
+      {
+        img:"https://assets.afcdn.com/story/20250807/2308366_w944h530c1cx2750cy1834cxt0cyt0cxb5500cyb3667.webp",
+        name:"Assiette construction",
+        desc:"Trois œufs, fèves au lard ou cretons, bacon, jambon et saucisses",
+        price:"1.00 $"
+      },
+      {
+        img:"https://assets.afcdn.com/story/20250807/2308366_w944h530c1cx2750cy1834cxt0cyt0cxb5500cyb3667.webp",
+        name:"Deux œufs avec saucisse fumée au bœuf et crêpe",
+        desc:"Deux œufs avec saucisse fumée au bœuf et crêpe",
+        price:"1.00 $"
+      },
+      {
+        img:"https://assets.afcdn.com/story/20250807/2308366_w944h530c1cx2750cy1834cxt0cyt0cxb5500cyb3667.webp",
+        name:"Deux œufs avec viande fumée et crêpe",
+        desc:"Deux œufs avec viande fumée et crêpe",
+        price:"1.00 $"
+      },
+      {
+        img:"https://assets.afcdn.com/story/20250807/2308366_w944h530c1cx2750cy1834cxt0cyt0cxb5500cyb3667.webp",
+        name:"Super 1 : Rock Forest",
+        desc:"Deux œufs avec saucisse fumée au bœuf et crêpe aux bananes recouverte de tartinade choco-noisettes et choco-blanc",
+        price:"1.00 $"
+      },
+      {
+        img:"https://assets.afcdn.com/story/20250807/2308366_w944h530c1cx2750cy1834cxt0cyt0cxb5500cyb3667.webp",
+        name:"Super 2 : Magog",
+        desc:"Deux œufs avec une demi-gaufre montée de bananes, de fraises et de guimauves recouverte de tartinade choco-noisettes et crème anglaise ainsi qu’un choix de viande",
+        price:"1.00 $"
+      },
+      {
+        img:"https://assets.afcdn.com/story/20250807/2308366_w944h530c1cx2750cy1834cxt0cyt0cxb5500cyb3667.webp",
+        name:"Super 3 : Vieux-Port",
+        desc:"Une petite casserole à la viande avec un œuf et sauce hollandaise, accompagnée d’une demi-gaufre, bananes, coulis de chocolat et beurre d’arachide",
+        price:"1.00 $"
+      }
+    ],
+
+    //*************************** omelettes ****************************************
+
+    "Les omelettes": [
+        {
+        img:"https://i.imgur.com/mB4dvNU.jpeg",
+        name:"Nature",
+        desc:"",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/mB4dvNU.jpeg",
+        name:"Fromage jaune",
+        desc:"",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/mB4dvNU.jpeg",
+        name:"Bacon ou saucisses et fromage cheddar",
+        desc:"",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/mB4dvNU.jpeg",
+        name:"Jambon et fromage suisse",
+        desc:"",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/mB4dvNU.jpeg",
+        name:"Omelette Sabz",
+        desc:"Épinards et fromage cheddar",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/mB4dvNU.jpeg",
+        name:"Santé",
+        desc:"Tomates, oignons, poivrons et fromage cheddar",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/mB4dvNU.jpeg",
+        name:"Western",
+        desc:"Poivrons, oignons et jambon",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/mB4dvNU.jpeg",
+        name:"Western King",
+        desc:"Poivrons, oignons, jambon et fromage cheddar",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/mB4dvNU.jpeg",
+        name:"Végé",
+        desc:"Végétarienne",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/mB4dvNU.jpeg",
+        name:"Végé King",
+        desc:"Végétarienne et fromage cheddar",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/mB4dvNU.jpeg",
+        name:"À la viande",
+        desc:"Bacon, saucisses, jambon et fromage suisse",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/mB4dvNU.jpeg",
+        name:"La Québécoise",
+        desc:"Tomates, épinards, bacon, saucisses et fromage cheddar",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/mB4dvNU.jpeg",
+        name:"Champignons, échalotes, oignons et brie",
+        desc:"",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/mB4dvNU.jpeg",
+        name:"Saumon fumé, échalotes et oignons",
+        desc:"",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/mB4dvNU.jpeg",
+        name:"Viande fumée, échalotes et fromage suisse",
+        desc:"",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/mB4dvNU.jpeg",
+        name:"Tomates et avocat",
+        desc:"Tomates, avocat et fromage mozzarella",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/mB4dvNU.jpeg",
+        name:"L’Exceptionnelle",
+        desc:"Tomates sechées, épinards, bacon, avocat et fromage cheddar",
+        price:"1.00 $"
+      }
+    ],
+
+    //*************************** Les crêpes ****************************************
+
+    "Les crêpes": [
+      {
+        img:"https://www.ma-grande-taille.com/wp-content/uploads/2020/01/Une-idee-recettes-salees-sucrees-vegan-chandeleur-2020.jpg",
+        name:"3 fromages",
+        desc:"",
+        price:"1.00 $"
+      },
+      {
+        img:"https://www.ma-grande-taille.com/wp-content/uploads/2020/01/Une-idee-recettes-salees-sucrees-vegan-chandeleur-2020.jpg",
+        name:"Asperges, jambon et fromage suisse",
+        desc:"",
+        price:"1.00 $"
+      },
+      {
+        img:"https://www.ma-grande-taille.com/wp-content/uploads/2020/01/Une-idee-recettes-salees-sucrees-vegan-chandeleur-2020.jpg",
+        name:"Épinards et fromage cheddar",
+        desc:"",
+        price:"1.00 $"
+      },
+      {
+        img:"https://www.ma-grande-taille.com/wp-content/uploads/2020/01/Une-idee-recettes-salees-sucrees-vegan-chandeleur-2020.jpg",
+        name:"Bacon et fromage cheddar",
+        desc:"",
+        price:"1.00 $"
+      },
+      {
+        img:"https://www.ma-grande-taille.com/wp-content/uploads/2020/01/Une-idee-recettes-salees-sucrees-vegan-chandeleur-2020.jpg",
+        name:"Nature",
+        desc:"",
+        price:"1.00 $"
+      },
+      {
+        img:"https://www.ma-grande-taille.com/wp-content/uploads/2020/01/Une-idee-recettes-salees-sucrees-vegan-chandeleur-2020.jpg",
+        name:"Galettes de sarrasin",
+        desc:"3 crêpes au sarrasin accompagnées de mélasse",
+        price:"1.00 $"
+      },
+      {
+        img:"https://www.ma-grande-taille.com/wp-content/uploads/2020/01/Une-idee-recettes-salees-sucrees-vegan-chandeleur-2020.jpg",
+        name:"La Délicieuse",
+        desc:"Pommes, fromage cheddar fondu et sirop d’érable",
+        price:"1.00 $"
+      },
+      {
+        img:"https://www.ma-grande-taille.com/wp-content/uploads/2020/01/Une-idee-recettes-salees-sucrees-vegan-chandeleur-2020.jpg",
+        name:"La Frutti",
+        desc:"Crêpe farcie d’une belle variété de fruits et crème pâtissière maison",
+        price:"1.00 $"
+      },
+      {
+        img:"https://www.ma-grande-taille.com/wp-content/uploads/2020/01/Une-idee-recettes-salees-sucrees-vegan-chandeleur-2020.jpg",
+        name:"Bananes-Choco",
+        desc:"Crêpe farcie de bananes et crème pâtissière maison, nappée de chocolat-noisettes fondant",
+        price:"1.00 $"
+      },
+      {
+        img:"https://www.ma-grande-taille.com/wp-content/uploads/2020/01/Une-idee-recettes-salees-sucrees-vegan-chandeleur-2020.jpg",
+        name:"Magique",
+        desc:"Crêpe farcie de bananes, bleuets, framboises, fraises et guimauves, recouverte de tartinade chocolat-noisettes et chocolat blanc",
+        price:"1.00 $"
+      },
+      {
+        img:"https://www.ma-grande-taille.com/wp-content/uploads/2020/01/Une-idee-recettes-salees-sucrees-vegan-chandeleur-2020.jpg",
+        name:"Arc-en-ciel",
+        desc:"Crêpe aux bananes, kiwis, fraises et bleuets, servie avec crème anglaise, coulis chocolat-noisettes et coulis de fraises",
+        price:"1.00 $"
+      }
+    ],
+        //*************************** casseroles ****************************************
+    "Les fameuses casseroles": [
+        {
+        img:"https://i.imgur.com/IDwMjyR.jpeg",
+        name:"Végétarienne",
+        desc:"Végétarienne, patates, choix de fromage, sauce hollandaise et 2 œufs",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/IDwMjyR.jpeg",
+        name:"À la viande",
+        desc:"Saucisses, jambon, bacon, patates, choix de fromage, sauce hollandaise et 2 œufs",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/IDwMjyR.jpeg",
+        name:"Deluxe",
+        desc:"Poivrons, tomates, épinards, oignons, champignons, saucisses, jambon, bacon, patates, choix de fromage, sauce hollandaise et 2 œufs",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/IDwMjyR.jpeg",
+        name:"Suprême",
+        desc:"Saumon fumé, oignons, câpres, champignons, patates, choix de fromage, sauce hollandaise et 2 œufs",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/IDwMjyR.jpeg",
+        name:"Avocat et bacon",
+        desc:"Demi-avocat, bacon, patates, oignons, poivrons, tomates, choix de fromage, sauce hollandaise et 2 œufs",
+        price:"1.00 $"
+      }
+    ],
+    //*************************** gaufres ****************************************
+    "Gaufres maison": [
+      {
+        img:"https://i.imgur.com/tY3X63d.jpeg",
+        name:"Gaufres maison Nature ",
+        desc:"Décorée de fruits frais",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/mB4dvNU.jpeg",
+        name:"Gaufres Mont Everest",
+        desc:"Montagne de fruits et crème anglaise maison",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/tY3X63d.jpeg",
+        name:"Gaufres maison Bananes-choco",
+        desc:"Accompagnée de bananes et chocolat noisettes fondant",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/mB4dvNU.jpeg",
+        name:"Gaufres maison Bananes et fraises",
+        desc:"Servie avec crème anglaise maison",
+        price:"1.00 $"
+      }
+    ],
+    //*************************** Amis & famille ****************************************
+    "Amis & famille": [
+      {
+        img:"https://boutiquelecargo.com/wp-content/uploads/2024/08/photo-nickels-joliette-4.png",
+        name:"Le Joliette",
+        desc:"2 œufs, choix de viande et crêpe ou pain doré aux fruits, accompagnés de crème pâtissière maison",
+        price:"1.00 $"
+      },
+      {
+        img:"https://boutiquelecargo.com/wp-content/uploads/2024/08/photo-nickels-joliette-4.png",
+        name:"Le Niagara Falls",
+        desc:"2 œufs, choix de viande et crêpe ou pain doré aux bananes chocolat-noisettes",
+        price:"1.00 $"
+      },
+      {
+        img:"https://boutiquelecargo.com/wp-content/uploads/2024/08/photo-nickels-joliette-4.png",
+        name:"Le Firestone",
+        desc:"2 œufs, choix de viande et crêpe ou pain doré aux fraises, bananes, framboises et bleuets, accompagnés de crème pâtissière maison",
+        price:"1.00 $"
+      },
+      {
+        img:"https://boutiquelecargo.com/wp-content/uploads/2024/08/photo-nickels-joliette-4.png",
+        name:"Le Blainville",
+        desc:"2 œufs, choix de viande et crêpe pommes-cheddar ou poires-cheddar",
+        price:"1.00 $"
+      }
+    ],
+    //*************************** Les œufs bénédictines ****************************************
+    "Les œufs bénédictines": [
+      {
+        img:"https://i.imgur.com/vdBWLyw.jpeg",
+        name:"Le Classique",
+        desc:"2 œufs pochés, jambon, fromage suisse, recouverts de sauce hollandaise et choix de viande",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/vdBWLyw.jpeg",
+        name:"Le Florentine",
+        desc:"2 œufs pochés, épinards, fromage cheddar, recouverts de sauce hollandaise et choix de viande",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/vdBWLyw.jpeg",
+        name:"Tex Mex",
+        desc:"2 œufs pochés, oignons, fromage cheddar, tomates, guacamole, poivrons, recouverts de sauce hollandaise et sauce sriracha",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/vdBWLyw.jpeg",
+        name:"Béné Santé",
+        desc:"2 œufs pochés servis sur bagel avec saumon fumé recouverts de sauce hollandaise",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/vdBWLyw.jpeg",
+        name:"Le Sucré-Salé",
+        desc:"1 œuf poché avec bacon et fromage cheddar recouvert de sauce hollandaise et choix de viande, accompagné d’une crêpe et de sa montagne de fruits avec chocolat-noisettes fondant",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/vdBWLyw.jpeg",
+        name:"L’Européenne",
+        desc:"2 œufs pochés, tomates, bacon, fromage cheddar, recouverts de sauce hollandaise et choix de viande",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/vdBWLyw.jpeg",
+        name:"Bénédictine Coco",
+        desc:"2 œufs pochés, champignons sautés, échalotes et brie, recouverts de sauce hollandaise",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/vdBWLyw.jpeg",
+        name:"Bénédictine viande fumée",
+        desc:"2 œufs pochés avec viande fumée, oignons et fromage suisse, recouverts de sauce hollandaise",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/vdBWLyw.jpeg",
+        name:"La Timide",
+        desc:"2 œufs pochés et jambon, recouverts de sauce hollandaise",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/vdBWLyw.jpeg",
+        name:"Bénédictine Bacon",
+        desc:"2 œufs pochés avec bacon et fromage jaune, recouverts de sauce hollandaise et choix de viande",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/vdBWLyw.jpeg",
+        name:"Bénédictine Palm Beach",
+        desc:"2 œufs pochés, avec bacon, tomates séchées et avocat, recouverts de sauce hollandaise",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/vdBWLyw.jpeg",
+        name:"Bénédictine Le Zen",
+        desc:"2 œufs pochés avec saumon fumé, oignons rouges et avocat, recouverts de sauce hollandaise",
+        price:"1.00 $"
+      }
+    ],
+
+    //*************************** Les assiettes spéciales ****************************************
+
+    "Les assiettes spéciales": [
+      {
+        img:"https://i.imgur.com/nYnLzkl.jpeg",
+        name:"Déjeuner Santé",
+        desc:"1 œuf au choix, fromage cottage et bol de fruits, accompagné d’un bagel ou de rôties",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/nYnLzkl.jpeg",
+        name:"L’Excellence Atlantique",
+        desc:"Assiette de saumon fumé accompagnée de salade, câpres, oignons, bagel, fromage à la crème et fruits frais",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/nYnLzkl.jpeg",
+        name:"Sandwich Doré Santé",
+        desc:"Sandwich de pain doré au jambon, fromage suisse et œuf, accompagné d’une montagne de fruits frais, pommes de terre maison et crème anglaise maison",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/nYnLzkl.jpeg",
+        name:"La Populaire",
+        desc:"2 œufs avec une demi-gaufre, bananes et fraises, chocolat-noisettes et coulis de fraises, accompagnés d’un choix de viande et de pommes de terre maison",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/nYnLzkl.jpeg",
+        name:"Crêpes Spéciales",
+        desc:"Une crêpe jambon-suisse, une crêpe bacon-cheddar et une crêpe épinards-cheddar, accompagnées d’une montagne de fruits frais et de pommes de terre maison",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/nYnLzkl.jpeg",
+        name:"Assiette Mirna",
+        desc:"Une petite crêpe garnie de fraises et d’un coulis de fraises, une petite crêpe garnie de bananes et d’un coulis de chocolat, ainsi qu’une petite crêpe garnie de pommes et d’un coulis de caramel",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/nYnLzkl.jpeg",
+        name:"La Californie",
+        desc:"2 œufs, avocat, tomates et oignons rouges sur pain ou bagel multigrains, servis avec un bol de fruits frais",
+        price:"1.00 $"
+      }
+    ],
+
+    //*************************** Santé Fruits ****************************************
+
+    "Santé Fruits": [
+      {
+        img:"https://i.imgur.com/KtVQqEX.jpeg",
+        name:"Le Classique",
+        desc:"Yogourt vanille ou nature, fruits variés et Croque Nature",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/KtVQqEX.jpeg",
+        name:"Fruits des champs",
+        desc:"Bananes, bleuets, framboises, fraises, yogourt nature et crème anglaise maison",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/KtVQqEX.jpeg",
+        name:"Himalaya",
+        desc:"Fruits de saison dans un mélange de yogourt nature et crème anglaise maison, Müslix et Croque Nature",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/KtVQqEX.jpeg",
+        name:"Coupe de fruits",
+        desc:"",
+        price:"1.00 $"
+      }
+    ],
+
+      //*************************** Les sandwichs ****************************************
+
+    "Les sandwichs": [
+      {
+        img:"https://i.imgur.com/17YBnrC.jpeg",
+        name:"Sandwich norvégien",
+        desc:"Sur bagel, fromage à la crème, saumon fumé et laitue",
+        price:"22.50 $"
+      },
+      {
+        img:"https://i.imgur.com/17YBnrC.jpeg",
+        name:"BLT avec œuf",
+        desc:"Sur muffin anglais ou bagel, œuf, bacon, laitue, tomates et fromage jaune",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/17YBnrC.jpeg",
+        name:"Club Coco Frutti",
+        desc:"Club déjeuner : œuf, choix de bacon, saucisses ou jambon, tomates, laitue et fromage jaune",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/17YBnrC.jpeg",
+        name:"Croque-Monsieur",
+        desc:"Œuf, jambon, tomates, laitue et fromage suisse",
+        price:"1.00 $"
+      }
+    ],
+
+    //*************************** Menu midi ****************************************
+
+    "Menu midi": [
+      {
+        img:"https://i.imgur.com/sLFs06C.jpeg",
+        name:"Club sandwich",
+        desc:"Servi avec frites et salade",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/sLFs06C.jpeg",
+        name:"Club sandwich viande fumée",
+        desc:"Servi avec frites et salade",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/sLFs06C.jpeg",
+        name:"Hamburger steak",
+        desc:"Oignons caramélisés, frites, salade et sauce demi-glace",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/sLFs06C.jpeg",
+        name:"Hamburger",
+        desc:"Servi avec frites et salade",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/sLFs06C.jpeg",
+        name:"Cheeseburger",
+        desc:"Servi avec frites et salade",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/sLFs06C.jpeg",
+        name:"Hamburger au poulet",
+        desc:"Servi avec frites et salade",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/sLFs06C.jpeg",
+        name:"Croque-Madame",
+        desc:"Poulet grillé, fromage suisse, tomates et laitue, servi avec frites et salade",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/sLFs06C.jpeg",
+        name:"Wrap viande fumée",
+        desc:"Fromage suisse et oignons caramélisés, servi avec frites et salade",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/sLFs06C.jpeg",
+        name:"Wrap au poulet César et bacon",
+        desc:"Fromage suisse, servi avec frites et salade",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/sLFs06C.jpeg",
+        name:"Fish’n Chips",
+        desc:"Servi avec frites, salade et sauce tartare",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/sLFs06C.jpeg",
+        name:"Salade César",
+        desc:"Avec poulet grillé",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/sLFs06C.jpeg",
+        name:"Salade maison",
+        desc:"Avec poulet grillé",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/sLFs06C.jpeg",
+        name:"Hamburger South Beach",
+        desc:"Avocat, oignons caramélisés et fromage suisse, servi avec frites et salade",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/sLFs06C.jpeg",
+        name:"Sandwich bacon et avocat",
+        desc:"Bacon, avocat et fromage cheddar, servi avec frites et salade",
+        price:"1.00 $"
+      }
+    ],
+    //*************************** Menu enfant ****************************************
+
+    "Menu enfant": [
+      {
+        img:"https://i.imgur.com/l3yz7Xu.jpeg",
+        name:"Bol de céréales ou gruau avec rôties",
+        desc:"",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/l3yz7Xu.jpeg",
+        name:"1 œuf avec 1 choix de viande",
+        desc:"Choisissez parmi : bacon, jambon, saucisses, cretons, fèves au lard, bologne ou bacon de dinde",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/l3yz7Xu.jpeg",
+        name:"Crêpe ou pain doré ou gaufre nature",
+        desc:"",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/l3yz7Xu.jpeg",
+        name:"Demi-gaufre",
+        desc:"Montée de bananes et de guimauves, recouverte d’un coulis chocolat-noisettes",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/l3yz7Xu.jpeg",
+        name:"Crêpe ou pain doré ou gaufre aux fruits",
+        desc:"",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/l3yz7Xu.jpeg",
+        name:"Crêpe ou pain doré ou gaufre aux bananes et chocolat-noisettes fondant",
+        desc:"",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/l3yz7Xu.jpeg",
+        name:"Crêpe aux pépites de chocolat-noisettes avec fraises et bananes",
+        desc:"",
+        price:"1.00 $"
+      },
+      {
+        img:"https://i.imgur.com/l3yz7Xu.jpeg",
+        name:"Omelette au fromage jaune",
+        desc:"(3 œufs)",
+        price:"1.00 $"
+      }
+    ]
+  };
+
+  // Références DOM
+  const categoriesDiv = document.getElementById('categories');
+  const platsSection = document.getElementById('plats-section');
+  const platsGrid = document.getElementById('plats-grid');
+  const platsTitle = document.getElementById('plats-title');
+  const backBtn = document.getElementById('back-btn');
+
+  // Affiche les plats d'une catégorie
+  function showPlats(category) {
+    platsGrid.innerHTML = ''; // vide la grille
+    platsTitle.textContent = category.charAt(0).toUpperCase() + category.slice(1);
+    menuData[category].forEach(plat => {
+      const platCard = document.createElement('div');
+      platCard.className = 'plat-card';
+      platCard.innerHTML = `
+        <img src="${plat.img}" alt="${plat.name}" />
+        <h3>${plat.name}</h3>
+        <p>${plat.desc}</p>
+        <div class="price">${plat.price}</div>
+      `;
+      platsGrid.appendChild(platCard);
+    });
+    categoriesDiv.style.display = 'none';
+    platsSection.classList.add('active');
+
+
+ setTimeout(() => {
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+}, 50);
+  }
+
+
+
+
+
+  // Clic sur une catégorie
+  categoriesDiv.addEventListener('click', e => {
+    const card = e.target.closest('.category-card');
+    if(!card) return;
+    const cat = card.getAttribute('data-category');
+    if(menuData[cat]) {
+      showPlats(cat);
+    }
+  });
+
+  // Bouton retour
+  backBtn.addEventListener('click', () => {
+    platsSection.classList.remove('active');
+    categoriesDiv.style.display = 'grid';
+  });
+
+  // CONFETTI POPUP
+  let confettiInterval;
+
+  function launchConfetti() {
+    confetti({
+      particleCount: 5,
+      spread: 80,
+      origin: { y: 0.6 }
+    });
+    confetti({
+      particleCount: 10,
+      spread: 160,
+      origin: { y: 0.8 }
+    });
+  }
+
+  function startConfetti() {
+    confettiInterval = setInterval(launchConfetti, 400);
+  }
+  startConfetti();
+
+  function closePopup() {
+    const popup = document.getElementById('offer-popup');
+    popup.style.display = 'none';
+    clearInterval(confettiInterval);
+  }
+</script>
+
+</body>
+</html>
